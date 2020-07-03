@@ -11,10 +11,12 @@ class Todo extends Component {
 
   constructor(props) {
     super(props);
-    this.handleAdd =    this.handleAdd.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    this.handleRemove = this.handleRemove.bind(this);
-    this.state =        { description: '', list: [] };
+    this.handleAdd =            this.handleAdd.bind(this);
+    this.handleChange =         this.handleChange.bind(this);
+    this.handleRemove =         this.handleRemove.bind(this);
+    this.handleMarkAsDone =     this.handleMarkAsDone.bind(this);
+    this.handleMarkAsPending =  this.handleMarkAsPending.bind(this);
+    this.state =                { description: '', list: [] };
 
     this.refresh();
   }
@@ -24,16 +26,43 @@ class Todo extends Component {
     axios.post(URL, {description})
     .then((resp) => {
       const updatedList = [...this.state.list];
-      updatedList.unshift(resp.data)
-      this.setState({...this.state, description:'', list: updatedList})
+      updatedList.unshift(resp.data);
+      this.setState({...this.state, description:'', list: updatedList});
     });
   }
 
   handleChange(e) {
-    this.setState({...this.state, description: e.target.value})
+    this.setState({...this.state, description: e.target.value});
   }
 
-  handleRemove(todo) {
+  handleMarkAsDone(todo) {
+    axios.put(`${URL}/${todo._id}`, {...todo, done: true})
+    .then(resp => {
+      this.state.list.map( li => {
+        if ( li._id === todo._id ){
+          li.done = true;
+        }
+        return li;
+      });
+      this.setState({...this.state, description:'', list: this.state.list});
+    })
+  }
+
+  handleMarkAsPending(todo) {
+    axios.put(`${URL}/${todo._id}`, {...todo, done: false})
+    .then(resp => {
+      this.state.list.map( li => {
+        if ( li._id === todo._id ){
+          li.done = false;
+        }
+        return li;
+      });
+      this.setState({...this.state, description:'', list: this.state.list});
+    })
+  }
+
+  handleRemove( todo ) {
+    if ( !todo.done ) { return; }
     axios.delete(`${URL}/${todo._id}`)
     .then(resp => {
       this.state.list = this.state.list.filter(sl => sl._id !== todo._id);
@@ -59,8 +88,10 @@ class Todo extends Component {
           description={this.state.description} />
 
         <TodoList 
-            list={this.state.list}
-            handleRemove={this.handleRemove} />
+          list={this.state.list}
+          handleRemove={this.handleRemove}
+          handleMarkAsDone={this.handleMarkAsDone}
+          handleMarkAsPending={this.handleMarkAsPending} />
       </div>
     );
   }
