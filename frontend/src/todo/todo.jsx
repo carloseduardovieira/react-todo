@@ -16,6 +16,7 @@ class Todo extends Component {
     this.handleRemove =         this.handleRemove.bind(this);
     this.handleMarkAsDone =     this.handleMarkAsDone.bind(this);
     this.handleMarkAsPending =  this.handleMarkAsPending.bind(this);
+    this.handleSearch =         this.handleSearch.bind(this);
     this.state =                { description: '', list: [] };
 
     this.refresh();
@@ -70,9 +71,14 @@ class Todo extends Component {
     });
   }
 
-  refresh() {
-    axios.get(`${URL}?sort=-createdAt`)
-    .then(resp => this.setState({ ...this.state, description: '', list: resp.data }));
+  handleSearch() {
+    this.refresh(this.state.description);
+  }
+
+  refresh( description = '' ) {
+    const search = description ? `&description__regex=/${description}/` : '';
+    axios.get(`${URL}?sort=-createdAt${search}`)
+    .then(resp => this.setState({ ...this.state, description, list: resp.data }));
   }
 
   render () {
@@ -85,7 +91,8 @@ class Todo extends Component {
         <TodoForm
           handleAdd={this.handleAdd} 
           handleChange={this.handleChange}
-          description={this.state.description} />
+          description={this.state.description} 
+          handleSearch={this.handleSearch}/>
 
         <TodoList 
           list={this.state.list}
